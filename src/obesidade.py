@@ -4,58 +4,43 @@ import matplotlib.pyplot as plt
 from skfuzzy import control as ctrl
 
 #Variaveis de Entrada (Antecedent)
-qualidade = ctrl.Antecedent(np.arange(0, 11, 1), 'qualidade')
-servico = ctrl.Antecedent(np.arange(0, 11, 1), 'servico')
+eat = ctrl.Antecedent(np.arange(0, 11, 1), 'comer')
 
 #Variaveis de saída (Consequent)
-gorjeta = ctrl.Consequent(np.arange(0, 31, 1), 'gorjeta')
+weight = ctrl.Consequent(np.arange(0, 161, 1), 'peso')
 
 # automf -> Atribuição de categorias automaticamente
-qualidade.automf(names=['ruim','ok','otima'],)
-servico.automf(names=['ruim','medio','bom'])
+eat.automf(names=['pouco','razoavel','muito'])
 
 # atribuicao sem o automf
-gorjeta['minima'] = fuzz.gaussmf(gorjeta.universe, 0,.1)
-gorjeta['baixa'] = fuzz.gaussmf(gorjeta.universe, .1, 3)
-gorjeta['media'] = fuzz.gaussmf(gorjeta.universe, 15,5)
-gorjeta['alta'] = fuzz.gaussmf(gorjeta.universe, 30,5)
-
+#peso['minima'] = fuzz.gaussmf(gorjeta.universe, 0,.1)
+weight['leve'] = fuzz.trapmf(weight.universe, [-1,0,40,60])
+weight['medio'] = fuzz.trapmf(weight.universe, [40,60,80,100])
+weight['pesado'] = fuzz.trapmf(weight.universe, [80,100,150,160])
 
 #Visualizando as variáveis
-qualidade.view()
-servico.view()
-gorjeta.view()
-
-
+eat.view()
+weight.view()
 
 #Criando as regras
-regra_1 = ctrl.Rule(qualidade['ruim'] & servico['ruim'], gorjeta['minima'])
-regra_2 = ctrl.Rule(qualidade['ruim'] | servico['ruim'], gorjeta['baixa'])
-regra_3 = ctrl.Rule(servico['medio'], gorjeta['media'])
-regra_4 = ctrl.Rule(servico['bom'] | qualidade['otima'], gorjeta['alta'])
+rule1 = ctrl.Rule(eat['pouco'], weight['leve'])
+rule2 = ctrl.Rule(eat['razoavel'], weight['medio'])
+rule3 = ctrl.Rule(eat['muito'], weight['pesado'])
 
-controlador = ctrl.ControlSystem([regra_1, regra_2, regra_3,regra_4])
-
+controller = ctrl.ControlSystem([rule1, rule2, rule3])
 
 #Simulando
-CalculoGorjeta = ctrl.ControlSystemSimulation(controlador)
+weightCalc = ctrl.ControlSystemSimulation(controller)
 
-notaQualidade = int(input('Qualidade: '))
-notaServico = int(input('Servico: '))
-CalculoGorjeta.input['qualidade'] = notaQualidade
-CalculoGorjeta.input['servico'] = notaServico
-CalculoGorjeta.compute()
+comerInput = int(input('comer: '))
+weightCalc.input['comer'] = comerInput
+weightCalc.compute()
 
-valorGorjeta = CalculoGorjeta.output['gorjeta']
+peso = weightCalc.output['peso']
 
-print("\nQualidade %d \nServiço %d \nGorjeta de %5.2f" %(
-        notaQualidade,
-        notaServico,
-        valorGorjeta))
+print("Peso: %5.2f Kg" %peso)
 
-
-qualidade.view(sim=CalculoGorjeta)
-servico.view(sim=CalculoGorjeta)
-gorjeta.view(sim=CalculoGorjeta)
+eat.view(sim=weightCalc)
+weight.view(sim=weightCalc)
 
 plt.show()
